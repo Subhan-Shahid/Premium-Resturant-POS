@@ -3,7 +3,9 @@ import { useEffect } from 'react'
 import AppHeader from './components/layout/AppHeader'
 import Sidebar from './components/layout/Sidebar'
 import BottomNav from './components/layout/BottomNav'
+import ProtectedRoute from './components/common/ProtectedRoute'
 import useStore from './store/useStore'
+import { ROLES, PERMISSIONS } from './utils/security'
 
 // Pages
 import Dashboard from './pages/Dashboard'
@@ -50,12 +52,22 @@ function App() {
   const role = String(currentUser.role || '').toLowerCase()
   const isChef = role === 'chef'
   const isCashier = role === 'cashier'
+  const isWaiter = role === 'waiter'
+
+  // Default redirect path based on role
+  const defaultPath = isChef
+    ? '/kitchen'
+    : isCashier
+    ? '/pos'
+    : isWaiter
+    ? '/tables'
+    : '/dashboard'
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50 dark:bg-[#07090e] text-gray-900 dark:text-slate-100 font-sans">
       <CloudSyncManager />
       
-      {/* Top Header */}
+      {/* Top Header with Lock Screen */}
       <AppHeader />
 
       {/* Main Workspace: Sidebar + Dynamic Content */}
@@ -63,48 +75,135 @@ function App() {
         {/* Desktop / Tablet Sidebar */}
         {!isChef && <Sidebar />}
 
-        {/* Content Viewport */}
+        {/* Content Viewport with Strict Route Security */}
         <main
           className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-5 lg:p-6"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <Routes>
-            {/* Chef defaults to Kitchen KDS */}
-            {isChef ? (
-              <>
-                <Route path="/" element={<Navigate to="/kitchen" replace />} />
-                <Route path="/kitchen" element={<Kitchen />} />
-                <Route path="*" element={<Navigate to="/kitchen" replace />} />
-              </>
-            ) : isCashier ? (
-              /* Cashier defaults to POS */
-              <>
-                <Route path="/" element={<Navigate to="/pos" replace />} />
-                <Route path="/pos" element={<POS />} />
-                <Route path="/tables" element={<Tables />} />
-                <Route path="/kitchen" element={<Kitchen />} />
-                <Route path="/orders-history" element={<OrderHistory />} />
-                <Route path="*" element={<Navigate to="/pos" replace />} />
-              </>
-            ) : (
-              /* Manager / Admin / Waiter full access */
-              <>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/pos" element={<POS />} />
-                <Route path="/tables" element={<Tables />} />
-                <Route path="/kitchen" element={<Kitchen />} />
-                <Route path="/menu" element={<MenuCatalog />} />
-                <Route path="/reservations" element={<Reservations />} />
-                <Route path="/orders-history" element={<OrderHistory />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/expenses" element={<Expenses />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/users" element={<UserManagement />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </>
-            )}
+            <Route path="/" element={<Navigate to={defaultPath} replace />} />
+
+            {/* Dashboard: Restricted to Admin / Manager */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_DASHBOARD} fallbackPath={defaultPath}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* POS: Admin, Manager, Cashier, Waiter */}
+            <Route
+              path="/pos"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_POS}>
+                  <POS />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Tables & Floor: Admin, Manager, Cashier, Waiter */}
+            <Route
+              path="/tables"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_TABLES}>
+                  <Tables />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Kitchen KDS: Admin, Manager, Chef, Cashier, Waiter */}
+            <Route
+              path="/kitchen"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_KITCHEN}>
+                  <Kitchen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Menu Catalog: Admin, Manager, Chef */}
+            <Route
+              path="/menu"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_MENU} fallbackPath={defaultPath}>
+                  <MenuCatalog />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Reservations: Admin, Manager, Waiter, Cashier */}
+            <Route
+              path="/reservations"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_RESERVATIONS} fallbackPath={defaultPath}>
+                  <Reservations />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Order History: Admin, Manager, Cashier */}
+            <Route
+              path="/orders-history"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_ORDERS_HISTORY} fallbackPath={defaultPath}>
+                  <OrderHistory />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Food Inventory: Admin, Manager, Chef */}
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_INVENTORY} fallbackPath={defaultPath}>
+                  <Inventory />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Expenses: Admin, Manager only */}
+            <Route
+              path="/expenses"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_EXPENSES} fallbackPath={defaultPath}>
+                  <Expenses />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Financial & Sales Reports: Admin, Manager only */}
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.VIEW_REPORTS} fallbackPath={defaultPath}>
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* User Management & Security: Admin, Manager only */}
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.MANAGE_USERS} fallbackPath={defaultPath}>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Settings & Configuration: Admin, Manager only */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute allowedRoles={PERMISSIONS.MANAGE_SETTINGS} fallbackPath={defaultPath}>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route path="*" element={<Navigate to={defaultPath} replace />} />
           </Routes>
         </main>
       </div>

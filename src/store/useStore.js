@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { nanoid } from '../utils/nanoid'
+import { verifyPassword, hashPassword } from '../utils/security'
 
 // Initial Seed Menu Items
 const initialMenuItems = [
@@ -545,13 +546,17 @@ export const useStore = create(
         set((state) => ({ ui: { ...state.ui, activeFloor: floor } })),
 
       // Auth Actions
-      login: (username, password) => {
-        const u = get().users.find(
-          (x) => x.username.toLowerCase() === username.toLowerCase() && x.password === password
+      login: async (username, plainPassword) => {
+        const users = get().users || []
+        const u = users.find(
+          (x) => x.username.toLowerCase() === String(username).toLowerCase()
         )
         if (u) {
-          set({ currentUser: u })
-          return { success: true, user: u }
+          const isValid = await verifyPassword(plainPassword, u.password)
+          if (isValid) {
+            set({ currentUser: u })
+            return { success: true, user: u }
+          }
         }
         return { success: false, message: 'Invalid username or password' }
       },
@@ -991,15 +996,25 @@ export const useStore = create(
       },
 
       // ==================== USERS & STAFF ====================
-      addUser: (user) =>
+      addUser: async (user) => {
+        const hashedPassword = user.password ? await hashPassword(user.password) : ''
         set((state) => ({
-          users: [...state.users, { id: nanoid(), name: user.name || user.username, ...user }],
-        })),
+          users: [
+            ...state.users,
+            { id: nanoid(), name: user.name || user.username, ...user, password: hashedPassword },
+          ],
+        }))
+      },
 
-      updateUser: (id, updates) =>
+      updateUser: async (id, updates) => {
+        let finalUpdates = { ...updates }
+        if (updates.password) {
+          finalUpdates.password = await hashPassword(updates.password)
+        }
         set((state) => ({
-          users: state.users.map((u) => (u.id === id ? { ...u, ...updates } : u)),
-        })),
+          users: state.users.map((u) => (u.id === id ? { ...u, ...finalUpdates } : u)),
+        }))
+      },
 
       removeUser: (id) =>
         set((state) => ({

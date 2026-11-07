@@ -19,7 +19,7 @@ export default function UserManagement() {
 
   const resetForm = () => { setEditingId(null); setUsername(''); setPassword(''); setRole('Cashier'); setError('') }
 
-  const onSave = (e) => {
+  const onSave = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
     setError('')
     const uname = username.trim()
@@ -30,9 +30,9 @@ export default function UserManagement() {
     const exists = userList.some(u => u && u.username && u.username.toLowerCase() === uname.toLowerCase() && u.id !== editingId)
     if (exists) { setError('Username already exists'); return }
     if (editingId) {
-      updateUser(editingId, { username: uname, ...(password ? { password } : {}), role })
+      await updateUser(editingId, { username: uname, ...(password ? { password } : {}), role })
     } else {
-      addUser({ username: uname, password, role })
+      await addUser({ username: uname, password, role })
     }
     setOpen(false)
     resetForm()

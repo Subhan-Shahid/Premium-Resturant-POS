@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   Settings as SettingsIcon,
   Save,
@@ -9,12 +9,26 @@ import {
   Wifi,
   Building,
   Phone,
-  MapPin
+  ShieldCheck,
+  Download,
+  Upload,
+  AlertTriangle,
+  RotateCcw
 } from 'lucide-react'
 import useStore from '../store/useStore'
 
 export default function Settings() {
-  const { settings, updateSettings } = useStore()
+  const {
+    settings,
+    updateSettings,
+    menuItems,
+    tables,
+    sales,
+    inventory,
+    reservations,
+    expenses,
+    users,
+  } = useStore()
 
   const [companyName, setCompanyName] = useState(settings.companyName || 'Bella Vista Bistro')
   const [tagline, setTagline] = useState(settings.tagline || 'Artisanal Italian & Gourmet Grill')
@@ -27,6 +41,8 @@ export default function Settings() {
   const [wifiPassword, setWifiPassword] = useState(settings.wifiPassword || 'bellavistaguest')
 
   const [savedSuccess, setSavedSuccess] = useState(false)
+  const [backupMsg, setBackupMsg] = useState('')
+  const fileInputRef = useRef(null)
 
   const handleSave = (e) => {
     e.preventDefault()
@@ -43,6 +59,81 @@ export default function Settings() {
     })
     setSavedSuccess(true)
     setTimeout(() => setSavedSuccess(false), 3000)
+  }
+
+  // Export LocalStorage State as JSON Backup
+  const handleExportBackup = () => {
+    const backupData = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      restaurant: companyName,
+      settings: {
+        companyName,
+        tagline,
+        phone,
+        address,
+        currency,
+        salesTaxPercent,
+        serviceChargePercent,
+        gstNumber,
+        wifiPassword,
+      },
+      menuItems,
+      tables,
+      sales,
+      inventory,
+      reservations,
+      expenses,
+      users: users.map(u => ({ ...u, password: '***' })), // mask passwords in export
+    }
+
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2))
+    const dlAnchor = document.createElement('a')
+    dlAnchor.setAttribute('href', dataStr)
+    dlAnchor.setAttribute(
+      'download',
+      `dineflow-backup-${companyName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`
+    )
+    document.body.appendChild(dlAnchor)
+    dlAnchor.click()
+    dlAnchor.remove()
+
+    setBackupMsg('Backup downloaded securely!')
+    setTimeout(() => setBackupMsg(''), 4000)
+  }
+
+  // Import JSON Backup
+  const handleImportBackup = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result)
+        if (!parsed.menuItems || !parsed.tables) {
+          alert('Invalid DineFlow backup file format.')
+          return
+        }
+
+        if (window.confirm('Are you sure you want to restore this backup? Current data will be replaced with the backup file.')) {
+          useStore.setState({
+            settings: { ...useStore.getState().settings, ...(parsed.settings || {}) },
+            menuItems: parsed.menuItems || [],
+            tables: parsed.tables || [],
+            sales: parsed.sales || [],
+            inventory: parsed.inventory || [],
+            reservations: parsed.reservations || [],
+            expenses: parsed.expenses || [],
+          })
+          setBackupMsg('Backup restored successfully!')
+          setTimeout(() => setBackupMsg(''), 4000)
+        }
+      } catch (err) {
+        alert('Failed to parse backup JSON file: ' + err.message)
+      }
+    }
+    reader.readAsText(file)
   }
 
   return (
@@ -200,6 +291,52 @@ export default function Settings() {
                 className="w-full px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/[0.06] text-xs font-semibold dark:text-white border-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
+          </div>
+        </div>
+
+        {/* ─── DATA SECURITY & BACKUP CARD ─── */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#0d1219] border border-gray-100 dark:border-white/[0.08] space-y-4">
+          <h2 className="text-sm font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+            <ShieldCheck size={16} className="text-emerald-500" />
+            <span>Data Security, Persistence & Backups</span>
+          </h2>
+
+          <p className="text-xs text-gray-500 dark:text-slate-400">
+            Your restaurant data is stored securely in browser local storage. Download an offline backup file regularly to ensure business continuity.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleExportBackup}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-xs font-bold text-gray-800 dark:text-white transition-colors"
+            >
+              <Download size={15} />
+              <span>Export Offline Backup (JSON)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-xs font-bold text-gray-800 dark:text-white transition-colors"
+            >
+              <Upload size={15} />
+              <span>Restore from Backup</span>
+            </button>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".json"
+              onChange={handleImportBackup}
+              className="hidden"
+            />
+
+            {backupMsg && (
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                {backupMsg}
+              </span>
+            )}
           </div>
         </div>
 

@@ -13,20 +13,26 @@ import {
 } from 'lucide-react'
 import useStore from '../../store/useStore'
 import { useEffect } from 'react'
+import { PERMISSIONS, hasPermission } from '../../utils/security'
 
 const drawerItems = [
-  { to: '/dashboard', label: 'Executive Dashboard', icon: LayoutDashboard, color: 'text-amber-500' },
-  { to: '/reservations', label: 'Table Reservations', icon: CalendarDays, color: 'text-sky-500' },
-  { to: '/inventory', label: 'Food & Raw Inventory', icon: Package, color: 'text-emerald-500' },
-  { to: '/orders-history', label: 'Order & Bill History', icon: Receipt, color: 'text-purple-500' },
-  { to: '/expenses', label: 'Kitchen & Daily Expenses', icon: Wallet, color: 'text-rose-500' },
-  { to: '/reports', label: 'Sales & Revenue Reports', icon: BarChart3, color: 'text-indigo-500' },
-  { to: '/users', label: 'Staff Management', icon: Users, color: 'text-teal-500' },
-  { to: '/settings', label: 'Restaurant Settings', icon: Settings, color: 'text-slate-400' },
+  { to: '/dashboard', label: 'Executive Dashboard', icon: LayoutDashboard, color: 'text-amber-500', permission: PERMISSIONS.VIEW_DASHBOARD },
+  { to: '/reservations', label: 'Table Reservations', icon: CalendarDays, color: 'text-sky-500', permission: PERMISSIONS.VIEW_RESERVATIONS },
+  { to: '/inventory', label: 'Food & Raw Inventory', icon: Package, color: 'text-emerald-500', permission: PERMISSIONS.VIEW_INVENTORY },
+  { to: '/orders-history', label: 'Order & Bill History', icon: Receipt, color: 'text-purple-500', permission: PERMISSIONS.VIEW_ORDERS_HISTORY },
+  { to: '/expenses', label: 'Kitchen & Daily Expenses', icon: Wallet, color: 'text-rose-500', permission: PERMISSIONS.VIEW_EXPENSES },
+  { to: '/reports', label: 'Sales & Revenue Reports', icon: BarChart3, color: 'text-indigo-500', permission: PERMISSIONS.VIEW_REPORTS },
+  { to: '/users', label: 'Staff Management', icon: Users, color: 'text-teal-500', permission: PERMISSIONS.MANAGE_USERS },
+  { to: '/settings', label: 'Restaurant Settings', icon: Settings, color: 'text-slate-400', permission: PERMISSIONS.MANAGE_SETTINGS },
 ]
 
 export default function AppDrawer({ open, onClose }) {
-  const { settings, currentUser, logout } = useStore()
+  const { settings, currentUser } = useStore()
+  const userRole = currentUser?.role || 'Staff'
+
+  const accessibleItems = drawerItems.filter((item) =>
+    hasPermission(userRole, item.permission)
+  )
 
   useEffect(() => {
     if (!open) return
@@ -66,7 +72,7 @@ export default function AppDrawer({ open, onClose }) {
                 {settings?.companyName || 'Bella Vista Bistro'}
               </p>
               <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                Logged in as {currentUser?.name || currentUser?.username}
+                Logged in as {currentUser?.name || currentUser?.username} (<span className="capitalize text-orange-500">{userRole}</span>)
               </p>
             </div>
           </div>
@@ -80,7 +86,7 @@ export default function AppDrawer({ open, onClose }) {
         </div>
 
         <div className="overflow-y-auto px-4 py-3 space-y-1">
-          {drawerItems.map(({ to, label, icon: Icon, color }) => (
+          {accessibleItems.map(({ to, label, icon: Icon, color }) => (
             <NavLink
               key={to}
               to={to}

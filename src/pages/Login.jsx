@@ -14,7 +14,7 @@ export default function Login() {
 
   const brand = settings?.companyName || 'Bella Vista Bistro'
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
     setError('')
     const uname = username.trim()
@@ -24,7 +24,7 @@ export default function Login() {
     }
 
     setLoading(true)
-    const res = login(uname, password)
+    const res = await login(uname, password)
     if (!res.success) {
       setError(res.message || 'Invalid username or password')
       setLoading(false)
@@ -43,10 +43,10 @@ export default function Login() {
     }
   }
 
-  const handleQuickLogin = (uname, pwd) => {
+  const handleQuickLogin = async (uname, pwd) => {
     setUsername(uname)
     setPassword(pwd)
-    const res = login(uname, pwd)
+    const res = await login(uname, pwd)
     if (res.success) {
       const role = String(res.user?.role || '').toLowerCase()
       if (role === 'chef') navigate('/kitchen', { replace: true })
