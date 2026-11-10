@@ -107,6 +107,12 @@ export function buildCustomerBillHtml({
   paymentMethod = 'Cash',
   currency = '$',
 }) {
+  const restName = restaurant.companyName || restaurant.name || 'Restaurant'
+
+  const logoHtml = restaurant.logoDataUrl
+    ? `<div style="margin-bottom: 6px;"><img src="${restaurant.logoDataUrl}" style="max-height: 54px; max-width: 140px; object-fit: contain;" alt="Logo" /></div>`
+    : ''
+
   const rows = items.map(item => {
     const itemTotal = (Number(item.price || 0) * Number(item.qty || 1))
     return `
@@ -142,14 +148,17 @@ export function buildCustomerBillHtml({
     th { border-bottom: 1px solid #000; font-size: 11px; padding-bottom: 3px; text-align: left; }
     .total-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; }
     .grand-total { font-size: 15px; font-weight: 800; padding: 4px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; margin-top: 4px; }
-    .thank-you { text-align: center; margin-top: 12px; font-size: 12px; font-weight: 600; }
-    .footer-note { text-align: center; margin-top: 4px; font-size: 10px; color: #555; }
+    .thank-you { text-align: center; margin-top: 10px; font-size: 12px; font-weight: 700; }
+    .footer-note { text-align: center; margin-top: 3px; font-size: 10px; color: #555; }
+    .dev-credit { text-align: center; margin-top: 12px; padding-top: 6px; border-top: 1px dotted #888; font-size: 9.5px; color: #444; line-height: 1.3; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="center">
-      <div class="rest-name">${escapeHtml(restaurant.name || 'DineFlow Restaurant')}</div>
+      ${logoHtml}
+      <div class="rest-name">${escapeHtml(restName)}</div>
+      ${restaurant.tagline ? `<div class="rest-info" style="font-style: italic; margin-bottom: 2px;">${escapeHtml(restaurant.tagline)}</div>` : ''}
       ${restaurant.address ? `<div class="rest-info">${escapeHtml(restaurant.address)}</div>` : ''}
       ${restaurant.phone ? `<div class="rest-info">Tel: ${escapeHtml(restaurant.phone)}</div>` : ''}
       ${restaurant.gstNumber ? `<div class="rest-info">GST/Tax ID: ${escapeHtml(restaurant.gstNumber)}</div>` : ''}
@@ -230,8 +239,12 @@ export function buildCustomerBillHtml({
     <div class="thank-you">Thank you for dining with us!</div>
     <div class="footer-note">Please visit again soon.</div>
     ${restaurant.wifiPassword ? `<div class="footer-note">Guest Wi-Fi: <strong>${escapeHtml(restaurant.wifiPassword)}</strong></div>` : ''}
+
+    <div class="dev-credit">
+      Software developed by <strong>stackoraoftworks.agency</strong><br />
+      Contact: <strong>03216405272</strong>
+    </div>
   </div>
 </body>
 </html>`
 }
-

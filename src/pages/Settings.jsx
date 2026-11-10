@@ -13,7 +13,9 @@ import {
   Download,
   Upload,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  Image as ImageIcon,
+  Trash2
 } from 'lucide-react'
 import useStore from '../store/useStore'
 
@@ -40,6 +42,7 @@ export default function Settings() {
   const [serviceChargePercent, setServiceChargePercent] = useState(settings.serviceChargePercent ?? 10)
   const [gstNumber, setGstNumber] = useState(settings.gstNumber || 'GST-US-99214A')
   const [wifiPassword, setWifiPassword] = useState(settings.wifiPassword || 'bellavistaguest')
+  const [logoDataUrl, setLogoDataUrl] = useState(settings.logoDataUrl || '')
 
   const [savedSuccess, setSavedSuccess] = useState(false)
   const [backupMsg, setBackupMsg] = useState('')
@@ -57,12 +60,30 @@ export default function Settings() {
       serviceChargePercent: Number(serviceChargePercent) || 0,
       gstNumber,
       wifiPassword,
+      logoDataUrl,
     })
     setSavedSuccess(true)
     setTimeout(() => setSavedSuccess(false), 3000)
   }
 
-  // Export LocalStorage State as JSON Backup
+  // Handle Logo Upload
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Logo file must be smaller than 2MB.')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setLogoDataUrl(event.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoDataUrl('')
+  }
   const handleExportBackup = () => {
     const backupData = {
       version: '1.0',
@@ -78,6 +99,7 @@ export default function Settings() {
         serviceChargePercent,
         gstNumber,
         wifiPassword,
+        logoDataUrl,
       },
       menuItems,
       tables,
@@ -224,6 +246,59 @@ export default function Settings() {
                 onChange={(e) => setAddress(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/[0.06] text-xs font-semibold dark:text-white border-none focus:ring-2 focus:ring-orange-500"
               />
+            </div>
+
+            {/* Restaurant Logo Upload */}
+            <div className="sm:col-span-2 pt-2 border-t border-gray-100 dark:border-white/[0.06]">
+              <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1.5 flex items-center gap-1.5">
+                <ImageIcon size={14} className="text-orange-500" />
+                <span>Restaurant Logo (Used in App Header & Thermal Bill Receipts):</span>
+              </label>
+
+              <div className="flex flex-wrap items-center gap-4">
+                {logoDataUrl ? (
+                  <div className="relative group p-2 rounded-xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 flex items-center gap-3">
+                    <img
+                      src={logoDataUrl}
+                      alt="Restaurant Logo"
+                      className="h-12 w-auto max-w-[140px] object-contain rounded-lg"
+                    />
+                    <div className="pr-2">
+                      <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Logo Uploaded</p>
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="flex items-center gap-1 text-[11px] font-semibold text-rose-500 hover:text-rose-600 mt-0.5"
+                      >
+                        <Trash2 size={12} />
+                        <span>Remove Logo</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 dark:border-white/20 hover:border-orange-500 cursor-pointer bg-gray-50 dark:bg-white/[0.02] text-xs font-bold text-gray-700 dark:text-slate-300 transition-all">
+                    <Upload size={15} className="text-orange-500" />
+                    <span>Upload Logo Image (PNG / JPEG)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+                {logoDataUrl && (
+                  <label className="text-xs font-semibold text-orange-500 hover:underline cursor-pointer">
+                    <span>Change Logo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
             </div>
           </div>
         </div>
