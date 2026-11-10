@@ -170,7 +170,13 @@ export const useStore = create(
         if (u) {
           const isValid = await verifyPassword(inputPass, u.password)
           if (isValid) {
-            set({ currentUser: u })
+            set((state) => ({
+              currentUser: u,
+              posCart: {
+                ...state.posCart,
+                serverName: u.name || u.username || 'Staff',
+              },
+            }))
             return { success: true, user: u }
           }
         }

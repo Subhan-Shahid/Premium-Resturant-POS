@@ -93,6 +93,7 @@ export function buildCustomerBillHtml({
   orderType = 'Dine-In',
   tableName = 'T-1',
   serverName = 'Staff',
+  cashierName = '',
   customerName = 'Walk-in Guest',
   customerPhone = '',
   dateTime = new Date().toLocaleString(),
@@ -172,7 +173,7 @@ export function buildCustomerBillHtml({
     </div>
     <div class="meta-row">
       <span><strong>Table:</strong> ${escapeHtml(tableName)}</span>
-      <span><strong>Server:</strong> ${escapeHtml(serverName)}</span>
+      <span><strong>Server / Biller:</strong> ${escapeHtml(cashierName || serverName)}</span>
     </div>
     <div class="meta-row">
       <span><strong>Date:</strong> ${escapeHtml(dateTime)}</span>

@@ -174,12 +174,14 @@ export default function POS() {
     setPayModalOpen(false)
 
     if (sale) {
+      const activeCashier = currentUser?.name || currentUser?.username || 'Staff'
       const billHtml = buildCustomerBillHtml({
         restaurant: settings,
         orderId: sale.orderNumber,
         orderType: sale.type === 'dine_in' ? 'Dine-In' : sale.type === 'takeaway' ? 'Takeaway' : 'Delivery',
         tableName: sale.tableName,
-        serverName: sale.serverName,
+        serverName: sale.serverName || activeCashier,
+        cashierName: activeCashier,
         customerName: posCart.customerName,
         customerPhone: posCart.customerPhone,
         items: sale.items,
