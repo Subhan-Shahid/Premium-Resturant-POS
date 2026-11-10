@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { ChefHat, UtensilsCrossed, CheckCircle2, Bell, X, Volume2, VolumeX } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { ChefHat, UtensilsCrossed, Bell, Volume2, VolumeX } from 'lucide-react'
 import useStore from '../../store/useStore'
 import { soundManager } from '../../utils/soundAlerts'
 
@@ -8,14 +8,36 @@ export default function NotificationToastManager() {
   const [activeToasts, setActiveToasts] = useState([])
   const [soundEnabled, setSoundEnabled] = useState(true)
 
+  // Track the timestamp when the app/session mounted so we NEVER replay old historical notifications
+  const sessionStartTimeRef = useRef(Date.now())
+  // Track notification IDs that have already been toasted in this browser session
+  const processedNotiIdsRef = useRef(new Set())
+
   const userRole = String(currentUser?.role || '').toLowerCase()
 
-  // Track latest notification and fire sound/popup
+  // Track latest notification and fire sound/popup ONLY for genuinely new, real-time events
   useEffect(() => {
     if (!notifications || notifications.length === 0) return
 
     const latest = notifications[0]
     if (!latest || latest.read) return
+
+    // Guard 1: Has this notification already been toasted in this session?
+    if (processedNotiIdsRef.current.has(latest.id)) return
+
+    // Guard 2: Is this notification from the past (before current session started or older than 60 seconds)?
+    const notiTime = latest.timestamp ? new Date(latest.timestamp).getTime() : 0
+    const isHistorical = notiTime > 0 && notiTime < (sessionStartTimeRef.current - 15000)
+    const isTooOld = notiTime > 0 && (Date.now() - notiTime) > 60000 // older than 1 minute
+
+    if (isHistorical || isTooOld) {
+      // Mark as seen so it never fires
+      processedNotiIdsRef.current.add(latest.id)
+      return
+    }
+
+    // Mark as processed immediately so it only pops up ONCE
+    processedNotiIdsRef.current.add(latest.id)
 
     // Check if this notification is targeted to the current user's role
     // 'chef' target => chef and admin
@@ -33,10 +55,9 @@ export default function NotificationToastManager() {
     }
 
     if (shouldShow) {
-      // Avoid duplicate toasts in state
       setActiveToasts((prev) => {
         if (prev.some((t) => t.id === latest.id)) return prev
-        return [latest, ...prev.slice(0, 3)] // Max 3 visible at once
+        return [latest, ...prev.slice(0, 2)] // Max 3 visible at once
       })
 
       // Audio notification
@@ -50,10 +71,10 @@ export default function NotificationToastManager() {
         }
       }
 
-      // Auto dismiss from toast bar after 7 seconds
+      // Auto dismiss from toast bar after 6 seconds
       const timer = setTimeout(() => {
         setActiveToasts((prev) => prev.filter((t) => t.id !== latest.id))
-      }, 7000)
+      }, 6000)
 
       return () => clearTimeout(timer)
     }
@@ -140,7 +161,7 @@ export default function NotificationToastManager() {
                 onClick={() => handleClose(toast.id)}
                 className="p-1 rounded-lg opacity-70 hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
               >
-                <X size={16} />
+                ✕
               </button>
             </div>
           </div>
@@ -149,4 +170,3 @@ export default function NotificationToastManager() {
     </div>
   )
 }
-
