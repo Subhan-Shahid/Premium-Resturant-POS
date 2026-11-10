@@ -81,6 +81,27 @@ export const useStore = create(
       sales: initialSales,
       expenses: [],
 
+      // Live In-App Notifications Queue
+      notifications: [],
+      addNotification: (noti) =>
+        set((state) => ({
+          notifications: [
+            {
+              id: nanoid(),
+              timestamp: new Date().toISOString(),
+              read: false,
+              ...noti,
+            },
+            ...state.notifications.slice(0, 49), // retain up to 50
+          ],
+        })),
+      dismissNotification: (id) =>
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+        })),
+      clearAllNotifications: () =>
+        set({ notifications: [] }),
+
       // Active POS Cart
       posCart: {
         items: [],
@@ -377,10 +398,23 @@ export const useStore = create(
           )
         }
 
+        // Create notification for Kitchen / Chef
+        const kitchenNoti = {
+          id: nanoid(),
+          title: `New Order #${newKot.kotNumber}`,
+          message: `${newKot.orderType} • ${newKot.tableName || 'Takeaway'} (${newKot.items.length} items)`,
+          targetRole: 'chef', // targeted to kitchen/chef
+          type: 'new_order',
+          data: { kotId: newKot.id, kotNumber: newKot.kotNumber, table: newKot.tableName },
+          timestamp: new Date().toISOString(),
+          read: false,
+        }
+
         set({
           orders: updatedOrders,
           kots: [newKot, ...kots],
           tables: updatedTables,
+          notifications: [kitchenNoti, ...state.notifications.slice(0, 49)],
           posCart: {
             ...posCart,
             items: [],
@@ -437,10 +471,31 @@ export const useStore = create(
       },
 
       // Update KOT status in Kitchen Display System
-      updateKotStatus: (kotId, newStatus) =>
-        set((state) => ({
+      updateKotStatus: (kotId, newStatus) => {
+        const state = get()
+        const targetKot = state.kots.find((k) => k.id === kotId)
+        let newNotifications = [...state.notifications]
+
+        // When chef marks order as ready, create popup notification for Waiters & Floor Managers
+        if (newStatus === 'ready' && targetKot) {
+          const waiterNoti = {
+            id: nanoid(),
+            title: `Order Ready to Serve!`,
+            message: `Order #${targetKot.kotNumber} for ${targetKot.tableName || 'Counter'} is prepared. Please pick up!`,
+            targetRole: 'waiter', // targeted to waiters / cashiers / managers
+            type: 'order_ready',
+            data: { kotId: targetKot.id, kotNumber: targetKot.kotNumber, table: targetKot.tableName, server: targetKot.serverName },
+            timestamp: new Date().toISOString(),
+            read: false,
+          }
+          newNotifications = [waiterNoti, ...newNotifications.slice(0, 49)]
+        }
+
+        set({
           kots: state.kots.map((k) => (k.id === kotId ? { ...k, status: newStatus } : k)),
-        })),
+          notifications: newNotifications,
+        })
+      },
 
       // Update Table Status
       updateTableStatus: (tableId, status) =>

@@ -22,6 +22,7 @@ import UserManagement from './pages/UserManagement'
 import Settings from './pages/Settings'
 import Login from './pages/Login'
 import CloudSyncManager from './components/common/CloudSyncManager'
+import NotificationToastManager from './components/common/NotificationToastManager'
 
 function App() {
   const { ui, currentUser } = useStore()
@@ -66,6 +67,7 @@ function App() {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50 dark:bg-[#07090e] text-gray-900 dark:text-slate-100 font-sans">
       <CloudSyncManager />
+      <NotificationToastManager />
       
       {/* Top Header with Lock Screen */}
       <AppHeader />

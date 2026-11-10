@@ -13,11 +13,12 @@ const syncMeta = {
 }
 
 export default function AppHeader() {
-  const { settings, currentUser, cloudSyncStatus, ui, toggleDarkMode, logout, tables, kots } = useStore()
+  const { settings, currentUser, cloudSyncStatus, ui, toggleDarkMode, logout, tables, kots, notifications, clearAllNotifications } = useStore()
   const meta = syncMeta[cloudSyncStatus] || syncMeta.connected
   const isDark = ui?.darkMode
 
   const [isLocked, setIsLocked] = useState(false)
+  const [notiDropdownOpen, setNotiDropdownOpen] = useState(false)
   const idleTimerRef = useRef(null)
 
   // 15-minute automatic inactivity lock for terminal security
@@ -109,6 +110,74 @@ export default function AppHeader() {
             <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.04] border border-gray-200/60 dark:border-white/[0.06]">
               <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
               <span className="text-[10px] font-semibold text-gray-500 dark:text-slate-400">{meta.label}</span>
+            </div>
+
+            {/* Notifications Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setNotiDropdownOpen(!notiDropdownOpen)}
+                aria-label="View notifications"
+                title="Restaurant Notifications"
+                className="relative p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/[0.08] transition-colors"
+              >
+                <Bell size={16} />
+                {notifications && notifications.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+                )}
+                {notifications && notifications.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-orange-500" />
+                )}
+              </button>
+
+              {notiDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#121820] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-3 z-50 animate-scale-in">
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-white/[0.08]">
+                    <div className="flex items-center gap-1.5">
+                      <Bell size={14} className="text-orange-500" />
+                      <h4 className="text-xs font-bold text-gray-900 dark:text-white">Recent Alerts</h4>
+                    </div>
+                    {notifications && notifications.length > 0 && (
+                      <button
+                        onClick={() => clearAllNotifications()}
+                        className="text-[10px] font-semibold text-gray-400 hover:text-rose-500"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-64 overflow-y-auto divide-y divide-gray-100 dark:divide-white/[0.06] my-1">
+                    {!notifications || notifications.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-gray-400">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.slice(0, 10).map((n) => (
+                        <div key={n.id} className="py-2.5 flex flex-col gap-0.5">
+                          <div className="flex items-center justify-between">
+                            <span className={`text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
+                              n.type === 'new_order'
+                                ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                                : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                            }`}>
+                              {n.type === 'new_order' ? 'Chef Alert' : 'Waiter Alert'}
+                            </span>
+                            <span className="text-[9px] text-gray-400">
+                              {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-gray-900 dark:text-white mt-1">
+                            {n.title}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-slate-400 leading-tight">
+                            {n.message}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Lock Screen Button */}
