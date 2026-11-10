@@ -76,3 +76,4 @@ export default function ScreenLockModal({ open, onUnlock }) {
     </div>
   )
 }
+

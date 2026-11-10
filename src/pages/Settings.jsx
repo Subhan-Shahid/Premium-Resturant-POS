@@ -28,6 +28,7 @@ export default function Settings() {
     reservations,
     expenses,
     users,
+    clearTestData,
   } = useStore()
 
   const [companyName, setCompanyName] = useState(settings.companyName || 'Bella Vista Bistro')
@@ -331,6 +332,21 @@ export default function Settings() {
               onChange={handleImportBackup}
               className="hidden"
             />
+
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Are you sure you want to clear all active orders, KOTs, sales history, reservations, and expenses? This cannot be undone.')) {
+                  clearTestData()
+                  setBackupMsg('All testing & transactional data cleared successfully!')
+                  setTimeout(() => setBackupMsg(''), 4000)
+                }
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-500 transition-colors"
+            >
+              <RotateCcw size={15} />
+              <span>Wipe Testing / Transaction Data</span>
+            </button>
 
             {backupMsg && (
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">

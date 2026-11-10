@@ -82,3 +82,4 @@ export function hasPermission(userRole, permissionArray) {
     r => r.toLowerCase() === normalizedRole.toLowerCase()
   )
 }
+

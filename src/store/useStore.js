@@ -254,207 +254,38 @@ const initialMenuItems = [
   },
 ]
 
-// Seed Tables
+// Seed Tables (all available and clean)
 const initialTables = [
-  { id: 't-1', name: 'Table 1', section: 'Ground Floor', capacity: 2, status: 'available', currentOrderId: null },
-  { id: 't-2', name: 'Table 2', section: 'Ground Floor', capacity: 4, status: 'occupied', currentOrderId: 'ord-seed-1', serverName: 'Marco' },
-  { id: 't-3', name: 'Table 3', section: 'Ground Floor', capacity: 4, status: 'available', currentOrderId: null },
-  { id: 't-4', name: 'Table 4', section: 'Ground Floor', capacity: 6, status: 'available', currentOrderId: null },
-  { id: 't-5', name: 'Table 5', section: 'Ground Floor', capacity: 2, status: 'reserved', currentOrderId: null },
-  { id: 't-6', name: 'Table 6', section: '1st Floor (Terrace)', capacity: 4, status: 'available', currentOrderId: null },
-  { id: 't-7', name: 'Table 7', section: '1st Floor (Terrace)', capacity: 4, status: 'occupied', currentOrderId: 'ord-seed-2', serverName: 'Sofia' },
-  { id: 't-8', name: 'Table 8', section: '1st Floor (Terrace)', capacity: 8, status: 'available', currentOrderId: null },
-  { id: 'vip-1', name: 'VIP Suite 1', section: 'VIP Lounge', capacity: 10, status: 'available', currentOrderId: null },
+  { id: 't-1', name: 'Table 1', section: 'Ground Floor', capacity: 2, status: 'available', currentOrderId: null, serverName: null },
+  { id: 't-2', name: 'Table 2', section: 'Ground Floor', capacity: 4, status: 'available', currentOrderId: null, serverName: null },
+  { id: 't-3', name: 'Table 3', section: 'Ground Floor', capacity: 4, status: 'available', currentOrderId: null, serverName: null },
+  { id: 't-4', name: 'Table 4', section: 'Ground Floor', capacity: 6, status: 'available', currentOrderId: null, serverName: null },
+  { id: 't-5', name: 'Table 5', section: 'Ground Floor', capacity: 2, status: 'available', currentOrderId: null, serverName: null },
+  { id: 't-6', name: 'Table 6', section: '1st Floor (Terrace)', capacity: 4, status: 'available', currentOrderId: null, serverName: null },
+  { id: 't-7', name: 'Table 7', section: '1st Floor (Terrace)', capacity: 4, status: 'available', currentOrderId: null, serverName: null },
+  { id: 't-8', name: 'Table 8', section: '1st Floor (Terrace)', capacity: 8, status: 'available', currentOrderId: null, serverName: null },
+  { id: 'vip-1', name: 'VIP Suite 1', section: 'VIP Lounge', capacity: 10, status: 'available', currentOrderId: null, serverName: null },
 ]
 
-// Seed Orders & KOTs
-const initialOrders = [
-  {
-    id: 'ord-seed-1',
-    orderNumber: '101',
-    type: 'dine_in',
-    tableId: 't-2',
-    tableName: 'Table 2',
-    guestCount: 3,
-    serverName: 'Marco',
-    status: 'preparing',
-    createdAt: new Date(Date.now() - 18 * 60000).toISOString(),
-    items: [
-      { id: 'item-1', menuItemId: 'dish-1', name: 'Truffle Mushroom Bruschetta', price: 12.50, qty: 1, variant: 'Standard (3 pcs)', addons: [], note: 'Extra crispy bread' },
-      { id: 'item-2', menuItemId: 'dish-4', name: 'Margherita Burrata Pizza', price: 18.00, qty: 1, variant: '12 inch Regular', addons: ['Extra Mozzarella'], note: '' },
-      { id: 'item-3', menuItemId: 'dish-12', name: 'Signature Berry Mojito', price: 6.50, qty: 2, variant: 'Mocktail', addons: [], note: 'Less ice' },
-    ],
-    subtotal: 46.00,
-    discount: 0,
-    serviceCharge: 4.60,
-    tax: 3.68,
-    total: 54.28,
-    paymentMethod: null,
-  },
-  {
-    id: 'ord-seed-2',
-    orderNumber: '102',
-    type: 'dine_in',
-    tableId: 't-7',
-    tableName: 'Table 7',
-    guestCount: 2,
-    serverName: 'Sofia',
-    status: 'ready',
-    createdAt: new Date(Date.now() - 28 * 60000).toISOString(),
-    items: [
-      { id: 'item-4', menuItemId: 'dish-7', name: 'Angus Smash Burger', price: 16.00, qty: 2, variant: 'Double Patty', addons: ['Crispy Bacon'], note: 'No pickles for one' },
-      { id: 'item-5', menuItemId: 'dish-13', name: 'Artisan Iced Caramel Latte', price: 5.50, qty: 2, variant: 'Standard', addons: [], note: '' },
-    ],
-    subtotal: 48.00,
-    discount: 5.00,
-    serviceCharge: 4.30,
-    tax: 3.44,
-    total: 50.74,
-    paymentMethod: null,
-  },
-]
-
-// Seed KOTs
-const initialKots = [
-  {
-    id: 'kot-101',
-    kotNumber: 'KOT-101',
-    orderId: 'ord-seed-1',
-    tableId: 't-2',
-    tableName: 'Table 2',
-    orderType: 'Dine-In',
-    serverName: 'Marco',
-    status: 'cooking', // 'pending' | 'cooking' | 'ready' | 'served'
-    createdAt: new Date(Date.now() - 16 * 60000).toISOString(),
-    items: [
-      { name: 'Truffle Mushroom Bruschetta', qty: 1, variant: 'Standard (3 pcs)', addons: [], note: 'Extra crispy bread' },
-      { name: 'Margherita Burrata Pizza', qty: 1, variant: '12 inch Regular', addons: ['Extra Mozzarella'], note: '' },
-      { name: 'Signature Berry Mojito', qty: 2, variant: 'Mocktail', addons: [], note: 'Less ice' },
-    ],
-    notes: 'Urgent for Table 2',
-  },
-  {
-    id: 'kot-102',
-    kotNumber: 'KOT-102',
-    orderId: 'ord-seed-2',
-    tableId: 't-7',
-    tableName: 'Table 7',
-    orderType: 'Dine-In',
-    serverName: 'Sofia',
-    status: 'ready',
-    createdAt: new Date(Date.now() - 26 * 60000).toISOString(),
-    items: [
-      { name: 'Angus Smash Burger', qty: 2, variant: 'Double Patty', addons: ['Crispy Bacon'], note: 'No pickles on one' },
-      { name: 'Artisan Iced Caramel Latte', qty: 2, variant: 'Standard', addons: [], note: '' },
-    ],
-    notes: '',
-  },
-]
-
-// Seed Reservations
-const initialReservations = [
-  {
-    id: 'res-1',
-    guestName: 'Alexander Wright',
-    phone: '+1 555-912-3841',
-    partySize: 2,
-    date: new Date().toISOString().slice(0, 10),
-    time: '19:30',
-    tableId: 't-5',
-    tableName: 'Table 5',
-    specialRequest: 'Window seat, anniversary celebration with flowers.',
-    status: 'confirmed',
-  },
-  {
-    id: 'res-2',
-    guestName: 'Elena Rostova',
-    phone: '+1 555-842-1092',
-    partySize: 8,
-    date: new Date().toISOString().slice(0, 10),
-    time: '20:30',
-    tableId: 't-8',
-    tableName: 'Table 8',
-    specialRequest: 'Corporate dinner, separate checks required.',
-    status: 'confirmed',
-  },
-]
-
-// Seed Raw Ingredients (Inventory)
-const initialIngredients = [
-  { id: 'ing-1', name: 'Fresh Mozzarella / Burrata', category: 'Dairy', currentStock: 14.5, minStock: 5.0, unit: 'kg', costPerUnit: 12.00, supplier: 'MilkyWay Farms' },
-  { id: 'ing-2', name: 'Black Angus Beef Patties', category: 'Meat & Poultry', currentStock: 48, minStock: 20, unit: 'pcs', costPerUnit: 2.80, supplier: 'Prime Cuts Co' },
-  { id: 'ing-3', name: 'San Marzano Tomato Sauce', category: 'Dry Goods', currentStock: 32, minStock: 10, unit: 'cans', costPerUnit: 3.50, supplier: 'Italia Imports' },
-  { id: 'ing-4', name: 'Organic Pizza Flour (Tipo 00)', category: 'Dry Goods', currentStock: 85, minStock: 25, unit: 'kg', costPerUnit: 1.40, supplier: 'GrainMaster' },
-  { id: 'ing-5', name: 'Fresh Atlantic Salmon Fillet', category: 'Seafood', currentStock: 4.2, minStock: 5.0, unit: 'kg', costPerUnit: 22.00, supplier: 'Ocean Fresh Seafood' },
-  { id: 'ing-6', name: 'Fresh Basil & Microgreens', category: 'Produce', currentStock: 1.8, minStock: 1.0, unit: 'kg', costPerUnit: 15.00, supplier: 'Green Valley' },
-  { id: 'ing-7', name: 'White Truffle Oil', category: 'Dry Goods', currentStock: 3, minStock: 2, unit: 'bottles', costPerUnit: 28.00, supplier: 'Truffle Co' },
-  { id: 'ing-8', name: 'Specialty Espresso Beans', category: 'Beverages', currentStock: 12, minStock: 4, unit: 'kg', costPerUnit: 18.00, supplier: 'Roast Artisan' },
-]
-
-// Seed Past Completed Sales for Reports
-const initialSales = [
-  {
-    id: 'sale-1',
-    orderNumber: '098',
-    type: 'dine_in',
-    tableName: 'Table 3',
-    serverName: 'Marco',
-    total: 84.50,
-    subtotal: 72.00,
-    tax: 5.76,
-    serviceCharge: 7.20,
-    discount: 0.46,
-    paymentMethod: 'card',
-    date: new Date(Date.now() - 3 * 3600000).toISOString(),
-    items: [
-      { name: 'Grilled Ribeye Steak (300g)', qty: 2, price: 32.00 },
-      { name: 'Traditional Tiramisu', qty: 1, price: 9.00 },
-      { name: 'Signature Berry Mojito', qty: 2, price: 6.50 },
-    ],
-  },
-  {
-    id: 'sale-2',
-    orderNumber: '099',
-    type: 'takeaway',
-    tableName: 'Takeaway',
-    serverName: 'Counter',
-    total: 35.50,
-    subtotal: 32.50,
-    tax: 2.60,
-    serviceCharge: 0,
-    discount: 0,
-    paymentMethod: 'cash',
-    date: new Date(Date.now() - 2 * 3600000).toISOString(),
-    items: [
-      { name: 'Spicy Diavola Pepperoni Pizza', qty: 1, price: 19.50 },
-      { name: 'Spicy Buffalo Wings', qty: 1, price: 13.00 },
-    ],
-  },
-  {
-    id: 'sale-3',
-    orderNumber: '100',
-    type: 'delivery',
-    tableName: 'Delivery #42',
-    serverName: 'Online',
-    total: 42.00,
-    subtotal: 37.00,
-    tax: 2.96,
-    serviceCharge: 2.04,
-    discount: 0,
-    paymentMethod: 'online',
-    date: new Date(Date.now() - 1 * 3600000).toISOString(),
-    items: [
-      { name: 'Handcrafted Fettuccine Alfredo', qty: 2, price: 17.50 },
-      { name: 'Artisan Iced Caramel Latte', qty: 2, price: 5.50 },
-    ],
-  },
-]
+// Seed Orders & KOTs - empty for production
+const initialOrders = []
+const initialKots = []
+const initialReservations = []
+const initialIngredients = []
+const initialSales = []
 
 const initialStaff = [
   { id: 'st-1', name: 'Marco Rossi', role: 'Manager' },
   { id: 'st-2', name: 'Sofia Chen', role: 'Head Waiter' },
   { id: 'st-3', name: 'Liam Murphy', role: 'Cashier' },
   { id: 'st-4', name: 'Chef Giovanni', role: 'Executive Chef' },
+]
+
+const DEFAULT_SEED_USERS = [
+  { id: 'usr-1', username: 'admin', password: 'admin123', role: 'Admin', name: 'Marco Rossi' },
+  { id: 'usr-2', username: 'cashier', password: 'cashier123', role: 'Cashier', name: 'Liam Murphy' },
+  { id: 'usr-3', username: 'waiter', password: 'waiter123', role: 'Waiter', name: 'Sofia Chen' },
+  { id: 'usr-4', username: 'kitchen', password: 'kitchen123', role: 'Chef', name: 'Chef Giovanni' },
 ]
 
 export const useStore = create(
@@ -486,12 +317,7 @@ export const useStore = create(
         role: 'Admin',
         name: 'Marco Rossi',
       },
-      users: [
-        { id: 'usr-1', username: 'admin', password: 'admin123', role: 'Admin', name: 'Marco Rossi' },
-        { id: 'usr-2', username: 'cashier', password: 'cashier123', role: 'Cashier', name: 'Liam Murphy' },
-        { id: 'usr-3', username: 'waiter', password: 'waiter123', role: 'Waiter', name: 'Sofia Chen' },
-        { id: 'usr-4', username: 'kitchen', password: 'kitchen123', role: 'Chef', name: 'Chef Giovanni' },
-      ],
+      users: DEFAULT_SEED_USERS,
       staff: initialStaff,
 
       // Restaurant Data
@@ -511,10 +337,7 @@ export const useStore = create(
       reservations: initialReservations,
       inventory: initialIngredients,
       sales: initialSales,
-      expenses: [
-        { id: 'exp-1', title: 'Fresh Produce Market', category: 'Raw Materials', amount: 145.00, date: new Date().toISOString().slice(0, 10), paidBy: 'Cash' },
-        { id: 'exp-2', title: 'Gas Cylinder Refill', category: 'Kitchen Utility', amount: 85.00, date: new Date().toISOString().slice(0, 10), paidBy: 'Bank Transfer' },
-      ],
+      expenses: [],
 
       // Active POS Cart
       posCart: {
@@ -547,12 +370,29 @@ export const useStore = create(
 
       // Auth Actions
       login: async (username, plainPassword) => {
-        const users = get().users || []
-        const u = users.find(
-          (x) => x.username.toLowerCase() === String(username).toLowerCase()
+        let users = get().users
+        if (!Array.isArray(users) || users.length === 0) {
+          users = DEFAULT_SEED_USERS
+          set({ users: DEFAULT_SEED_USERS })
+        }
+
+        const inputUser = String(username || '').trim().toLowerCase()
+        const inputPass = String(plainPassword || '')
+
+        // 1. First check against in-state users
+        let u = users.find(
+          (x) => String(x.username || '').toLowerCase() === inputUser
         )
+
+        // 2. Fallback to default seed credentials if user was missing or reset
+        if (!u) {
+          u = DEFAULT_SEED_USERS.find(
+            (x) => String(x.username || '').toLowerCase() === inputUser
+          )
+        }
+
         if (u) {
-          const isValid = await verifyPassword(plainPassword, u.password)
+          const isValid = await verifyPassword(inputPass, u.password)
           if (isValid) {
             set({ currentUser: u })
             return { success: true, user: u }
@@ -1036,9 +876,34 @@ export const useStore = create(
         set((state) => ({
           expenses: state.expenses.filter((e) => e.id !== id),
         })),
+
+      // Reset testing data utility
+      clearTestData: () =>
+        set({
+          orders: [],
+          kots: [],
+          sales: [],
+          reservations: [],
+          expenses: [],
+          tables: initialTables.map((t) => ({ ...t, status: 'available', currentOrderId: null, serverName: null })),
+          posCart: {
+            items: [],
+            tableId: 't-1',
+            tableName: 'Table 1',
+            orderType: 'dine_in',
+            guestCount: 2,
+            serverName: 'Admin',
+            customerName: 'Walk-in Guest',
+            customerPhone: '',
+            customerAddress: '',
+            discount: 0,
+            tip: 0,
+            notes: '',
+          },
+        }),
     }),
     {
-      name: 'restaurant-management-storage-v1',
+      name: 'restaurant-management-storage-v2',
       storage: createJSONStorage(() => localStorage),
     }
   )
