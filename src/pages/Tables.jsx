@@ -26,6 +26,7 @@ export default function Tables() {
     loadTableOrderToCart,
     transferTable,
     updateTableStatus,
+    addTable,
     deleteTable,
     settings,
   } = useStore()
@@ -96,19 +97,11 @@ export default function Tables() {
   const handleAddTable = (e) => {
     e.preventDefault()
     if (!newTableName.trim()) return
-    useStore.setState((state) => ({
-      tables: [
-        ...state.tables,
-        {
-          id: `tbl-${Date.now()}`,
-          name: newTableName.trim(),
-          section: newTableSection,
-          capacity: Number(newTableCapacity) || 4,
-          status: 'available',
-          currentOrderId: null,
-        },
-      ],
-    }))
+    addTable({
+      name: newTableName.trim(),
+      section: newTableSection.trim() || 'Main Floor',
+      capacity: Number(newTableCapacity) || 4,
+    })
     setNewTableName('')
     setAddTableOpen(false)
   }
