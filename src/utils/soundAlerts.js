@@ -106,3 +106,4 @@ class SoundManager {
 }
 
 export const soundManager = new SoundManager()
+

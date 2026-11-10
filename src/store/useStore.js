@@ -2,6 +2,19 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { nanoid } from '../utils/nanoid'
 import { verifyPassword, hashPassword } from '../utils/security'
+import {
+  dbUpsertSettings,
+  dbUpsertUser, dbDeleteUser,
+  dbUpsertTable, dbDeleteTable, dbUpdateTableStatus,
+  dbUpsertMenuItem, dbDeleteMenuItem,
+  dbUpsertOrder, dbDeleteOrder,
+  dbUpsertKot, dbUpdateKotStatus,
+  dbUpsertReservation, dbDeleteReservation,
+  dbUpsertIngredient, dbDeleteIngredient,
+  dbInsertSale,
+  dbInsertExpense, dbDeleteExpense,
+  dbInsertNotification,
+} from '../lib/db'
 
 // Initial Seed Menu Items (empty for production)
 const initialMenuItems = []
@@ -166,8 +179,11 @@ export const useStore = create(
       logout: () => set({ currentUser: null }),
 
       // Settings
-      updateSettings: (newSettings) =>
-        set((state) => ({ settings: { ...state.settings, ...newSettings } })),
+      updateSettings: (newSettings) => {
+        set((state) => ({ settings: { ...state.settings, ...newSettings } }))
+        const merged = { ...useStore.getState().settings, ...newSettings }
+        dbUpsertSettings(merged).catch(() => {})
+      },
 
       // ==================== POS CART ACTIONS ====================
       setPosOrderType: (orderType) =>
@@ -424,6 +440,16 @@ export const useStore = create(
           },
         })
 
+        // Sync to Supabase in background
+        const updatedOrder = updatedOrders.find((o) => o.id === orderId)
+        if (updatedOrder) dbUpsertOrder(updatedOrder).catch(() => {})
+        dbUpsertKot(newKot).catch(() => {})
+        // Sync occupied table
+        if (posCart.orderType === 'dine_in' && posCart.tableId) {
+          dbUpdateTableStatus(posCart.tableId, 'occupied', orderId, posCart.serverName).catch(() => {})
+        }
+        dbInsertNotification(kitchenNoti).catch(() => {})
+
         return { orderId, kot: newKot }
       },
 
@@ -467,6 +493,16 @@ export const useStore = create(
           sales: [completedSale, ...state.sales],
         })
 
+        // Sync to Supabase
+        dbInsertSale(completedSale).catch(() => {})
+        dbDeleteOrder(orderId).catch(() => {})
+        // Free table in DB
+        const freedTable = updatedTables.find((t) => t.currentOrderId === null && state.tables.find(ot => ot.currentOrderId === orderId && ot.id === t.id))
+        const tableWithOldOrder = state.tables.find((t) => t.currentOrderId === orderId)
+        if (tableWithOldOrder) {
+          dbUpdateTableStatus(tableWithOldOrder.id, 'available', null, null).catch(() => {})
+        }
+
         return completedSale
       },
 
@@ -482,26 +518,31 @@ export const useStore = create(
             id: nanoid(),
             title: `Order Ready to Serve!`,
             message: `Order #${targetKot.kotNumber} for ${targetKot.tableName || 'Counter'} is prepared. Please pick up!`,
-            targetRole: 'waiter', // targeted to waiters / cashiers / managers
+            targetRole: 'waiter',
             type: 'order_ready',
             data: { kotId: targetKot.id, kotNumber: targetKot.kotNumber, table: targetKot.tableName, server: targetKot.serverName },
             timestamp: new Date().toISOString(),
             read: false,
           }
           newNotifications = [waiterNoti, ...newNotifications.slice(0, 49)]
+          dbInsertNotification(waiterNoti).catch(() => {})
         }
 
         set({
           kots: state.kots.map((k) => (k.id === kotId ? { ...k, status: newStatus } : k)),
           notifications: newNotifications,
         })
+        // Sync KOT status to Supabase
+        dbUpdateKotStatus(kotId, newStatus).catch(() => {})
       },
 
       // Update Table Status
-      updateTableStatus: (tableId, status) =>
+      updateTableStatus: (tableId, status) => {
         set((state) => ({
           tables: state.tables.map((t) => (t.id === tableId ? { ...t, status } : t)),
-        })),
+        }))
+        dbUpdateTableStatus(tableId, status).catch(() => {})
+      },
 
       // Change or Transfer Table
       transferTable: (fromTableId, toTableId) => {
@@ -529,71 +570,89 @@ export const useStore = create(
           kots: updatedKots,
           tables: updatedTables,
         })
+        // Sync tables to DB
+        dbUpdateTableStatus(fromTableId, 'available', null, null).catch(() => {})
+        dbUpdateTableStatus(toTableId, 'occupied', orderId, fromTable.serverName).catch(() => {})
         return true
       },
 
       // ==================== TABLES ACTIONS ====================
-      addTable: (table) =>
-        set((state) => ({
-          tables: [
-            ...state.tables,
-            {
-              id: nanoid(),
-              status: 'available',
-              currentOrderId: null,
-              serverName: null,
-              ...table,
-            },
-          ],
-        })),
+      addTable: (table) => {
+        const newTable = {
+          id: nanoid(),
+          status: 'available',
+          currentOrderId: null,
+          serverName: null,
+          ...table,
+        }
+        set((state) => ({ tables: [...state.tables, newTable] }))
+        dbUpsertTable(newTable).catch(() => {})
+      },
 
-      deleteTable: (tableId) =>
+      deleteTable: (tableId) => {
         set((state) => ({
           tables: state.tables.filter((t) => t.id !== tableId),
-        })),
+        }))
+        dbDeleteTable(tableId).catch(() => {})
+      },
 
       // ==================== MENU ITEMS ACTIONS ====================
-      addMenuItem: (dish) =>
-        set((state) => ({
-          menuItems: [{ id: nanoid(), inStock: true, ...dish }, ...state.menuItems],
-        })),
+      addMenuItem: (dish) => {
+        const newDish = { id: nanoid(), inStock: true, ...dish }
+        set((state) => ({ menuItems: [newDish, ...state.menuItems] }))
+        dbUpsertMenuItem(newDish).catch(() => {})
+      },
 
-      updateMenuItem: (id, updates) =>
+      updateMenuItem: (id, updates) => {
         set((state) => ({
           menuItems: state.menuItems.map((m) => (m.id === id ? { ...m, ...updates } : m)),
-        })),
+        }))
+        const updated = useStore.getState().menuItems.find((m) => m.id === id)
+        if (updated) dbUpsertMenuItem(updated).catch(() => {})
+      },
 
-      deleteMenuItem: (id) =>
+      deleteMenuItem: (id) => {
         set((state) => ({
           menuItems: state.menuItems.filter((m) => m.id !== id),
-        })),
+        }))
+        dbDeleteMenuItem(id).catch(() => {})
+      },
 
-      toggleDishStock: (id) =>
+      toggleDishStock: (id) => {
         set((state) => ({
           menuItems: state.menuItems.map((m) =>
             m.id === id ? { ...m, inStock: !m.inStock } : m
           ),
-        })),
+        }))
+        const updated = useStore.getState().menuItems.find((m) => m.id === id)
+        if (updated) dbUpsertMenuItem(updated).catch(() => {})
+      },
 
       // ==================== RESERVATIONS ACTIONS ====================
-      addReservation: (res) =>
-        set((state) => ({
-          reservations: [{ id: nanoid(), status: 'confirmed', ...res }, ...state.reservations],
-        })),
+      addReservation: (res) => {
+        const newRes = { id: nanoid(), status: 'confirmed', ...res }
+        set((state) => ({ reservations: [newRes, ...state.reservations] }))
+        dbUpsertReservation(newRes).catch(() => {})
+      },
 
-      updateReservation: (id, updates) =>
+      updateReservation: (id, updates) => {
         set((state) => ({
           reservations: state.reservations.map((r) =>
             r.id === id ? { ...r, ...updates } : r
           ),
-        })),
+        }))
+        const updated = useStore.getState().reservations.find((r) => r.id === id)
+        if (updated) dbUpsertReservation(updated).catch(() => {})
+      },
 
-      cancelReservation: (id) =>
+      cancelReservation: (id) => {
         set((state) => ({
           reservations: state.reservations.map((r) =>
             r.id === id ? { ...r, status: 'cancelled' } : r
           ),
-        })),
+        }))
+        dbUpsertReservation({ id, status: 'cancelled' }).catch(() => {})
+      },
 
       seatReservation: (reservationId) => {
         const state = get()
@@ -613,22 +672,36 @@ export const useStore = create(
           ),
           tables: updatedTables,
         })
+        dbUpsertReservation({ ...res, status: 'seated' }).catch(() => {})
+        if (res.tableId) dbUpdateTableStatus(res.tableId, 'occupied').catch(() => {})
       },
 
       // ==================== INVENTORY / INGREDIENTS ====================
-      addIngredient: (ing) =>
-        set((state) => ({
-          inventory: [{ id: nanoid(), ...ing }, ...state.inventory],
-        })),
+      addIngredient: (ing) => {
+        const newIng = { id: nanoid(), ...ing }
+        set((state) => ({ inventory: [newIng, ...state.inventory] }))
+        dbUpsertIngredient(newIng).catch(() => {})
+      },
 
-      updateIngredientStock: (id, newStock) =>
+      updateIngredientStock: (id, newStock) => {
         set((state) => ({
           inventory: state.inventory.map((item) =>
             item.id === id ? { ...item, currentStock: Number(newStock) } : item
           ),
-        })),
+        }))
+        const updated = useStore.getState().inventory.find((i) => i.id === id)
+        if (updated) dbUpsertIngredient({ ...updated, currentStock: Number(newStock) }).catch(() => {})
+      },
 
       logIngredientWastage: (id, wastedQty, reason) => {
+        const wastageExp = {
+          id: nanoid(),
+          title: `Food Wastage: ${wastedQty} units (${reason || 'Damaged/Expired'})`,
+          category: 'Wastage',
+          amount: 15.0,
+          date: new Date().toISOString().slice(0, 10),
+          paidBy: 'Stock Loss',
+        }
         set((state) => {
           const updated = state.inventory.map((item) =>
             item.id === id
@@ -637,30 +710,22 @@ export const useStore = create(
           )
           return {
             inventory: updated,
-            expenses: [
-              {
-                id: nanoid(),
-                title: `Food Wastage: ${wastedQty} units (${reason || 'Damaged/Expired'})`,
-                category: 'Wastage',
-                amount: 15.0,
-                date: new Date().toISOString().slice(0, 10),
-                paidBy: 'Stock Loss',
-              },
-              ...state.expenses,
-            ],
+            expenses: [wastageExp, ...state.expenses],
           }
         })
+        const updatedIng = useStore.getState().inventory.find((i) => i.id === id)
+        if (updatedIng) dbUpsertIngredient(updatedIng).catch(() => {})
+        dbInsertExpense(wastageExp).catch(() => {})
       },
 
       // ==================== USERS & STAFF ====================
       addUser: async (user) => {
         const hashedPassword = user.password ? await hashPassword(user.password) : ''
+        const newUser = { id: nanoid(), name: user.name || user.username, ...user, password: hashedPassword }
         set((state) => ({
-          users: [
-            ...state.users,
-            { id: nanoid(), name: user.name || user.username, ...user, password: hashedPassword },
-          ],
+          users: [...state.users, newUser],
         }))
+        dbUpsertUser(newUser).catch(() => {})
       },
 
       updateUser: async (id, updates) => {
@@ -671,28 +736,33 @@ export const useStore = create(
         set((state) => ({
           users: state.users.map((u) => (u.id === id ? { ...u, ...finalUpdates } : u)),
         }))
+        const updated = useStore.getState().users.find((u) => u.id === id)
+        if (updated) dbUpsertUser(updated).catch(() => {})
       },
 
-      removeUser: (id) =>
+      removeUser: (id) => {
         set((state) => ({
           users: state.users.filter((u) => u.id !== id),
-        })),
+        }))
+        dbDeleteUser(id).catch(() => {})
+      },
 
       // ==================== EXPENSES ====================
-      addExpense: (exp) =>
-        set((state) => ({
-          expenses: [{ id: nanoid(), ...exp }, ...state.expenses],
-        })),
+      addExpense: (exp) => {
+        const newExp = { id: nanoid(), ...exp }
+        set((state) => ({ expenses: [newExp, ...state.expenses] }))
+        dbInsertExpense(newExp).catch(() => {})
+      },
 
-      removeExpense: (id) =>
-        set((state) => ({
-          expenses: state.expenses.filter((e) => e.id !== id),
-        })),
+      removeExpense: (id) => {
+        set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }))
+        dbDeleteExpense(id).catch(() => {})
+      },
 
-      deleteExpense: (id) =>
-        set((state) => ({
-          expenses: state.expenses.filter((e) => e.id !== id),
-        })),
+      deleteExpense: (id) => {
+        set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }))
+        dbDeleteExpense(id).catch(() => {})
+      },
 
       // Reset testing data utility
       clearTestData: () =>
