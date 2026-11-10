@@ -10,6 +10,7 @@ import {
   UtensilsCrossed,
   Receipt,
   Sparkles,
+  Trash2,
   X
 } from 'lucide-react'
 import useStore from '../store/useStore'
@@ -25,6 +26,7 @@ export default function Tables() {
     loadTableOrderToCart,
     transferTable,
     updateTableStatus,
+    deleteTable,
     settings,
   } = useStore()
 
@@ -168,7 +170,23 @@ export default function Tables() {
       </div>
 
       {/* ─── TABLES GRID ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+      {filteredTables.length === 0 ? (
+        <div className="text-center py-16 bg-white dark:bg-[#0d1219] rounded-2xl border border-gray-100 dark:border-white/[0.08] p-8">
+          <Grid3X3 className="mx-auto h-12 w-12 text-gray-300 dark:text-slate-600 mb-3" />
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">No tables found</h3>
+          <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+            You don't have any tables configured for this section yet. Click "Add New Table" above to create your restaurant layout.
+          </p>
+          <button
+            onClick={() => setAddTableOpen(true)}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs"
+          >
+            <Plus size={15} />
+            <span>Create Table</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredTables.map((table) => {
           const activeOrder = orders.find((o) => o.id === table.currentOrderId)
           const isOccupied = table.status === 'occupied'
@@ -198,17 +216,34 @@ export default function Tables() {
                     </h3>
                   </div>
 
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                      isOccupied
-                        ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 animate-pulse'
-                        : isReserved
-                        ? 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                        : 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                    }`}
-                  >
-                    {table.status}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                        isOccupied
+                          ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 animate-pulse'
+                          : isReserved
+                          ? 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                          : 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                      }`}
+                    >
+                      {table.status}
+                    </span>
+                    {!isOccupied && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (window.confirm(`Delete ${table.name}?`)) {
+                            deleteTable(table.id)
+                          }
+                        }}
+                        title="Delete table"
+                        className="p-1 rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Capacity & Server */}
@@ -273,7 +308,8 @@ export default function Tables() {
             </div>
           )
         })}
-      </div>
+        </div>
+      )}
 
       {/* ─── MODAL: TRANSFER TABLE ─── */}
       {transferModalOpen && sourceTable && (

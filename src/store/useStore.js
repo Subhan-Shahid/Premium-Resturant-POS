@@ -3,269 +3,11 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { nanoid } from '../utils/nanoid'
 import { verifyPassword, hashPassword } from '../utils/security'
 
-// Initial Seed Menu Items
-const initialMenuItems = [
-  {
-    id: 'dish-1',
-    name: 'Truffle Mushroom Bruschetta',
-    category: 'Starters',
-    price: 12.50,
-    cost: 4.20,
-    prepTime: 10,
-    dietary: 'veg',
-    spicyLevel: 0,
-    popular: true,
-    inStock: true,
-    description: 'Crispy sourdough topped with sautéed wild mushrooms, white truffle oil and fresh herbs.',
-    imageUrl: 'https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?auto=format&fit=crop&w=500&q=80',
-    variants: [
-      { name: 'Standard (3 pcs)', priceDelta: 0 },
-      { name: 'Sharing Platter (6 pcs)', priceDelta: 8.00 },
-    ],
-    addons: [
-      { name: 'Extra Truffle Glaze', price: 2.00 },
-      { name: 'Shaved Parmesan', price: 1.50 },
-    ],
-  },
-  {
-    id: 'dish-2',
-    name: 'Crispy Calamari Fritti',
-    category: 'Starters',
-    price: 14.00,
-    cost: 5.50,
-    prepTime: 12,
-    dietary: 'non-veg',
-    spicyLevel: 1,
-    popular: true,
-    inStock: true,
-    description: 'Tender golden squid rings served with garlic aioli and fresh lemon wedges.',
-    imageUrl: 'https://images.unsplash.com/photo-1604909052743-94e838986d24?auto=format&fit=crop&w=500&q=80',
-    variants: [],
-    addons: [{ name: 'Extra Garlic Aioli', price: 1.50 }],
-  },
-  {
-    id: 'dish-3',
-    name: 'Spicy Buffalo Wings',
-    category: 'Starters',
-    price: 13.00,
-    cost: 4.80,
-    prepTime: 15,
-    dietary: 'non-veg',
-    spicyLevel: 3,
-    popular: false,
-    inStock: true,
-    description: 'Crispy fried chicken wings tossed in fiery house hot sauce with blue cheese dip.',
-    imageUrl: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=500&q=80',
-    variants: [
-      { name: '6 Wings', priceDelta: 0 },
-      { name: '12 Wings', priceDelta: 9.00 },
-    ],
-    addons: [{ name: 'Extra Blue Cheese Dip', price: 1.50 }],
-  },
-  {
-    id: 'dish-4',
-    name: 'Margherita Burrata Pizza',
-    category: 'Pizza & Pasta',
-    price: 18.00,
-    cost: 5.00,
-    prepTime: 15,
-    dietary: 'veg',
-    spicyLevel: 0,
-    popular: true,
-    inStock: true,
-    description: 'San Marzano tomato base, creamy whole burrata, fresh basil, and extra virgin olive oil.',
-    imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=500&q=80',
-    variants: [
-      { name: '10 inch Personal', priceDelta: -3.00 },
-      { name: '12 inch Regular', priceDelta: 0 },
-      { name: '16 inch Large', priceDelta: 6.00 },
-    ],
-    addons: [
-      { name: 'Extra Mozzarella', price: 2.50 },
-      { name: 'Add Prosciutto', price: 4.00 },
-      { name: 'Hot Honey Drizzle', price: 1.50 },
-    ],
-  },
-  {
-    id: 'dish-5',
-    name: 'Spicy Diavola Pepperoni Pizza',
-    category: 'Pizza & Pasta',
-    price: 19.50,
-    cost: 6.20,
-    prepTime: 15,
-    dietary: 'non-veg',
-    spicyLevel: 2,
-    popular: true,
-    inStock: true,
-    description: 'Spicy Italian pepperoni, fior di latte mozzarella, crushed chili flakes, and oregano.',
-    imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=500&q=80',
-    variants: [
-      { name: '12 inch Regular', priceDelta: 0 },
-      { name: '16 inch Large', priceDelta: 6.00 },
-    ],
-    addons: [{ name: 'Extra Pepperoni', price: 3.00 }, { name: 'Jalapeños', price: 1.50 }],
-  },
-  {
-    id: 'dish-6',
-    name: 'Handcrafted Fettuccine Alfredo',
-    category: 'Pizza & Pasta',
-    price: 17.50,
-    cost: 4.90,
-    prepTime: 14,
-    dietary: 'veg',
-    spicyLevel: 0,
-    popular: false,
-    inStock: true,
-    description: 'Fresh egg pasta ribbon tossed in rich butter, heavy cream, and 24-month aged Parmigiano.',
-    imageUrl: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?auto=format&fit=crop&w=500&q=80',
-    variants: [],
-    addons: [
-      { name: 'Add Grilled Chicken', price: 4.50 },
-      { name: 'Add Tiger Prawns', price: 6.00 },
-    ],
-  },
-  {
-    id: 'dish-7',
-    name: 'Angus Smash Burger',
-    category: 'Burgers & Wraps',
-    price: 16.00,
-    cost: 5.80,
-    prepTime: 12,
-    dietary: 'non-veg',
-    spicyLevel: 1,
-    popular: true,
-    inStock: true,
-    description: 'Double Angus beef smash patties, melted cheddar, caramelized onions, pickles & secret sauce.',
-    imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=80',
-    variants: [
-      { name: 'Double Patty', priceDelta: 0 },
-      { name: 'Triple Monster Patty', priceDelta: 4.50 },
-    ],
-    addons: [
-      { name: 'Crispy Bacon', price: 2.50 },
-      { name: 'Upgrade to Truffle Fries', price: 3.00 },
-    ],
-  },
-  {
-    id: 'dish-8',
-    name: 'Grilled Ribeye Steak (300g)',
-    category: 'Main Course',
-    price: 32.00,
-    cost: 13.50,
-    prepTime: 22,
-    dietary: 'non-veg',
-    spicyLevel: 0,
-    popular: true,
-    inStock: true,
-    description: 'Prime grain-fed ribeye steak grilled to order, served with rosemary roasted potatoes and peppercorn jus.',
-    imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=500&q=80',
-    variants: [
-      { name: 'Medium Rare', priceDelta: 0 },
-      { name: 'Medium', priceDelta: 0 },
-      { name: 'Medium Well', priceDelta: 0 },
-    ],
-    addons: [{ name: 'Garlic Butter Prawns topper', price: 7.00 }, { name: 'Mushroom Sauce', price: 2.50 }],
-  },
-  {
-    id: 'dish-9',
-    name: 'Pan-Seared Atlantic Salmon',
-    category: 'Main Course',
-    price: 26.00,
-    cost: 9.80,
-    prepTime: 18,
-    dietary: 'non-veg',
-    spicyLevel: 0,
-    popular: false,
-    inStock: true,
-    description: 'Crispy skin salmon fillet over saffron risotto, asparagus spears, and lemon caper butter.',
-    imageUrl: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=500&q=80',
-    variants: [],
-    addons: [],
-  },
-  {
-    id: 'dish-10',
-    name: 'Traditional Tiramisu',
-    category: 'Desserts',
-    price: 9.00,
-    cost: 2.80,
-    prepTime: 5,
-    dietary: 'veg',
-    spicyLevel: 0,
-    popular: true,
-    inStock: true,
-    description: 'Espresso-soaked savoiardi ladyfingers layered with velvety mascarpone and cocoa powder.',
-    imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=500&q=80',
-    variants: [],
-    addons: [{ name: 'Add Vanilla Gelato Scoop', price: 2.50 }],
-  },
-  {
-    id: 'dish-11',
-    name: 'Molten Belgian Chocolate Lava Cake',
-    category: 'Desserts',
-    price: 10.50,
-    cost: 3.20,
-    prepTime: 12,
-    dietary: 'veg',
-    spicyLevel: 0,
-    popular: true,
-    inStock: true,
-    description: 'Warm chocolate cake with a molten chocolate center, served with Madagascan vanilla ice cream.',
-    imageUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=500&q=80',
-    variants: [],
-    addons: [{ name: 'Extra Ice Cream Scoop', price: 2.50 }],
-  },
-  {
-    id: 'dish-12',
-    name: 'Signature Berry Mojito',
-    category: 'Beverages',
-    price: 6.50,
-    cost: 1.60,
-    prepTime: 4,
-    dietary: 'veg',
-    spicyLevel: 0,
-    popular: true,
-    inStock: true,
-    description: 'Fresh crushed blackberries, mint leaves, fresh lime, raw sugar, and sparkling soda.',
-    imageUrl: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=500&q=80',
-    variants: [
-      { name: 'Mocktail (Non-alcoholic)', priceDelta: 0 },
-      { name: 'Cocktail (+ Rum)', priceDelta: 4.50 },
-    ],
-    addons: [],
-  },
-  {
-    id: 'dish-13',
-    name: 'Artisan Iced Caramel Latte',
-    category: 'Beverages',
-    price: 5.50,
-    cost: 1.20,
-    prepTime: 4,
-    dietary: 'veg',
-    spicyLevel: 0,
-    popular: false,
-    inStock: true,
-    description: 'Double espresso pulled fresh over whole milk, salted caramel syrup, and cold foam.',
-    imageUrl: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=500&q=80',
-    variants: [
-      { name: 'Oat Milk Sub', priceDelta: 0.80 },
-      { name: 'Almond Milk Sub', priceDelta: 0.80 },
-    ],
-    addons: [{ name: 'Extra Espresso Shot', price: 1.50 }],
-  },
-]
+// Initial Seed Menu Items (empty for production)
+const initialMenuItems = []
 
-// Seed Tables (all available and clean)
-const initialTables = [
-  { id: 't-1', name: 'Table 1', section: 'Ground Floor', capacity: 2, status: 'available', currentOrderId: null, serverName: null },
-  { id: 't-2', name: 'Table 2', section: 'Ground Floor', capacity: 4, status: 'available', currentOrderId: null, serverName: null },
-  { id: 't-3', name: 'Table 3', section: 'Ground Floor', capacity: 4, status: 'available', currentOrderId: null, serverName: null },
-  { id: 't-4', name: 'Table 4', section: 'Ground Floor', capacity: 6, status: 'available', currentOrderId: null, serverName: null },
-  { id: 't-5', name: 'Table 5', section: 'Ground Floor', capacity: 2, status: 'available', currentOrderId: null, serverName: null },
-  { id: 't-6', name: 'Table 6', section: '1st Floor (Terrace)', capacity: 4, status: 'available', currentOrderId: null, serverName: null },
-  { id: 't-7', name: 'Table 7', section: '1st Floor (Terrace)', capacity: 4, status: 'available', currentOrderId: null, serverName: null },
-  { id: 't-8', name: 'Table 8', section: '1st Floor (Terrace)', capacity: 8, status: 'available', currentOrderId: null, serverName: null },
-  { id: 'vip-1', name: 'VIP Suite 1', section: 'VIP Lounge', capacity: 10, status: 'available', currentOrderId: null, serverName: null },
-]
+// Initial Tables (empty for production)
+const initialTables = []
 
 // Seed Orders & KOTs - empty for production
 const initialOrders = []
@@ -735,6 +477,26 @@ export const useStore = create(
         return true
       },
 
+      // ==================== TABLES ACTIONS ====================
+      addTable: (table) =>
+        set((state) => ({
+          tables: [
+            ...state.tables,
+            {
+              id: nanoid(),
+              status: 'available',
+              currentOrderId: null,
+              serverName: null,
+              ...table,
+            },
+          ],
+        })),
+
+      deleteTable: (tableId) =>
+        set((state) => ({
+          tables: state.tables.filter((t) => t.id !== tableId),
+        })),
+
       // ==================== MENU ITEMS ACTIONS ====================
       addMenuItem: (dish) =>
         set((state) => ({
@@ -880,16 +642,18 @@ export const useStore = create(
       // Reset testing data utility
       clearTestData: () =>
         set({
+          menuItems: [],
+          tables: [],
           orders: [],
           kots: [],
           sales: [],
           reservations: [],
+          inventory: [],
           expenses: [],
-          tables: initialTables.map((t) => ({ ...t, status: 'available', currentOrderId: null, serverName: null })),
           posCart: {
             items: [],
-            tableId: 't-1',
-            tableName: 'Table 1',
+            tableId: null,
+            tableName: '',
             orderType: 'dine_in',
             guestCount: 2,
             serverName: 'Admin',
@@ -903,7 +667,7 @@ export const useStore = create(
         }),
     }),
     {
-      name: 'restaurant-management-storage-v2',
+      name: 'restaurant-management-storage-v3',
       storage: createJSONStorage(() => localStorage),
     }
   )
